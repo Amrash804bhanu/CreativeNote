@@ -6,7 +6,7 @@ const Navbar = () => {
     <header className='bg-base-300 border-b border-base-content/10'>
       <div className='mx-auto max-w-7xl p-4'>
         <div className='flex items-center justify-between'>
-          <h1 className='text-3xl font-extrabold text-secondary font-mono tracking-tight text-white'>
+          <h1 className='text-3xl font-extrabold  font-mono tracking-tight text-white'>
             CreativeNote
           </h1>
           <div className='flex items-center gap-4'>

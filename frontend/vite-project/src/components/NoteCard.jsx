@@ -30,7 +30,7 @@ const NoteCard = ({ note, setNotes }) => {
       <div className='card-body'>
         <h3 className='card-title text-base-content'>{note.title}</h3>
         <p className='text-base-content/70  line-clamp-3'>{note.content}</p>
-        <div className='card-actions justify-between items-center mt-4'></div>
+        {/* <div className='card-actions justify-between items-center mt-4'></div> */}
         <div className='flex items-center gap-1'>
           <PenSquareIcon className='size-4'></PenSquareIcon>
           <button

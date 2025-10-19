@@ -1,45 +1,49 @@
-import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
+import dotenv from 'dotenv'
+import path from 'path'
 
-import notesRoutes from './Routes/notesRoutes.js'
+import notesRoutes from './routes/notesRoutes.js'
 import { connectDB } from './config/db.js'
-// import ratelimit from './config/upstash.js'
 import rateLimiter from './middlewares/ratelimiters.js'
-
-// console.log('MONGO_URI:', process.env.MONGO_URI)
-// console.log('PORT:', process.env.PORT)
 
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 5001
-connectDB()
+const __dirname = path.resolve()
 
-app.use(
-  cors({
-    origin: 'http://localhost:5173',
-  })
-)
-app.use(express.json()) // to use title and content we need middleware
+// middleware
+if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: 'http://localhost:5173',
+    })
+  )
+}
+app.use(express.json()) // this middleware will parse JSON bodies: req.body
 app.use(rateLimiter)
 
-app.use(express.urlencoded({ extended: true }))
+// our simple custom middleware
+// app.use((req, res, next) => {
+//   console.log(`Req method is ${req.method} & Req URL is ${req.url}`);
+//   next();
+// });
 
-// Connect to database with error handling
-const startServer = async () => {
-  try {
-    await connectDB()
+app.use('/api/notes', notesRoutes)
 
-    app.use('/api/notes', notesRoutes)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/vite-project/dist')))
 
-    app.listen(PORT, () => {
-      console.log(`server started on port:${PORT}`)
-    })
-  } catch (error) {
-    console.error('Failed to start server:', error.message)
-    process.exit(1)
-  }
+  app.get('*', (req, res) => {
+    res.sendFile(
+      path.join(__dirname, '../frontend/vite-project', 'dist', 'index.html')
+    )
+  })
 }
 
-startServer()
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log('Server started on PORT:', PORT)
+  })
+})

@@ -1,0 +1,121 @@
+import dotenv from 'dotenv'
+import express from 'express'
+import cors from 'cors'
+import path from 'path'
+
+import notesRoutes from './Routes/notesRoutes.js'
+import { connectDB } from './config/db.js'
+// import ratelimit from './config/upstash.js'
+import rateLimiter from './middlewares/ratelimiters.js'
+
+// console.log('MONGO_URI:', process.env.MONGO_URI)
+// console.log('PORT:', process.env.PORT)
+
+dotenv.config()
+
+const app = express()
+const PORT = process.env.PORT || 5001
+// connectDB()
+const __dirname = path.resolve() //source for the backend folder
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    express.static(path.join(__dirname, '../frontend/vite-project/dist')) //JOINING BOTH FRONTEND AND BACKEND [OPTIMIZED0]
+  )
+
+  app.get('/api/notes', (req, res) => {
+    // Your notes API logic here
+    res.json([{ _id: '1', title: 'Test Note', content: 'Test content' }])
+  })
+
+  app.get('/{*path}', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'dist', 'index.html'))
+  })
+}
+
+app.use(express.json()) // to use title and content we need middleware
+app.use(express.urlencoded({ extended: true }))
+
+app.use('/api/notes', rateLimiter, notesRoutes)
+
+
+
+// Connect to database with error handling
+const startServer = async () => {
+  try {
+    await connectDB()
+    app.listen(PORT, () => {
+      console.log(`server started on port:${PORT}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error.message)
+    process.exit(1)
+  }
+}
+
+startServer()
+
+
+
+
+
+
+
+orginal server file 
+// In your Express server file (server.js or app.js)
+
+import dotenv from 'dotenv'
+import express from 'express'
+import cors from 'cors'
+import path from 'path'
+
+import notesRoutes from './Routes/notesRoutes.js'
+import { connectDB } from './config/db.js'
+import rateLimiter from './middlewares/ratelimiters.js'
+
+dotenv.config()
+
+const app = express()
+const PORT = process.env.PORT || 5001
+const __dirname = path.resolve()
+console.log(__dirname)
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    express.static(path.join(__dirname, '../frontend/vite-project/dist')) //JOINING BOTH FRONTEND AND BACKEND [OPTIMIZED0]
+  )
+}
+
+console.log('Current __dirname:', __dirname)
+
+app.get('/{*path}', (req, res) => {
+  res.sendFile(
+    path.join(__dirname, '../frontend/vite-project/dist', 'index.html')
+  )
+})
+
+app.use(express.json()) // to use title and content we need middleware
+app.use(express.urlencoded({ extended: true }))
+
+app.use('/api/notes', rateLimiter, notesRoutes)
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: 'http://localhost:5173',
+    })
+  )
+}
+const startServer = async () => {
+  try {
+    await connectDB()
+    app.listen(PORT, () => {
+      console.log(`server started on port:${PORT}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error.message)
+    process.exit(1)
+  }
+}
+
+startServer()

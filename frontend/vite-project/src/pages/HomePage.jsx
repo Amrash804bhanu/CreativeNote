@@ -10,23 +10,40 @@ import NoteCard from '../components/NoteCard.jsx'
 import NotesNotFound from '../components/notesnotfound.jsx'
 
 const HomePage = () => {
-  const [isRateLimited, setIsRateLimited] = useState(true)
+  const [isRateLimited, setIsRateLimited] = useState(false)
   const [notes, setNotes] = useState([])
   const [loading, setloading] = useState(true)
 
   useEffect(() => {
     const fetchNote = async () => {
       try {
+        // Debug axios configuration
+        console.log('=== API DEBUG ===')
+        console.log('Axios baseURL:', api.defaults.baseURL)
+        console.log('Making API call to:', `${api.defaults.baseURL}/notes`)
+
         const res = await api.get('/notes')
-        setNotes(res.data)
-        setIsRateLimited(false)
-      } catch (error) {
-        console.log('error fetching notes')
-        if (error.response.status === 429) {
-          setIsRateLimited(true)
+        console.log('API Response:', res.data)
+        console.log('Response type:', typeof res.data)
+        console.log('Is array:', Array.isArray(res.data))
+
+        // ✅ Handle response safely
+        if (Array.isArray(res.data)) {
+          setNotes(res.data)
+          setIsRateLimited(false)
+          toast.success(`Loaded ${res.data.length} notes`)
+        } else if (res.data && Array.isArray(res.data.data)) {
+          // Handle wrapped response: { data: [...] }
+          setNotes(res.data.data)
+          setIsRateLimited(false)
         } else {
-          toast.error('failed to import the toast function')
+          console.error('Unexpected response format:', res.data)
+          setNotes([])
+          toast.error('Unexpected data format from server')
         }
+      } catch (error) {
+        console.error('API Error details:', error)
+        setNotes([]) // ✅ Always ensure notes is an array
       } finally {
         setloading(false)
       }
@@ -49,7 +66,7 @@ const HomePage = () => {
 
         {notes.length > 0 && !isRateLimited && (
           <div className='grid grid-cols-1 m:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {notes.map((note) => (
+            {(notes || []).map((note) => (
               <NoteCard key={note._id} note={note} setNotes={setNotes} />
             ))}
           </div>
